@@ -21,8 +21,9 @@ void led_strip_begin();
 void led_strip_end();
 void led_strip_init(uint8_t clk, uint8_t data);
 void led_strip_set_colour(uint8_t r, uint8_t g, uint8_t b);
-void controll_led_strip(void);
-uint32_t colour_generator(uint8_t stepsize);
+//void controll_led_strip(void);
+void controll_led_strip(uint8_t tRed, uint8_t tGreen, uint8_t tBlue);
+uint32_t colour_generator(uint8_t stepsize, uint8_t mode);
 void print_help(int);
 
 uint8_t pinClk, pinData;

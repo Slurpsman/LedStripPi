@@ -87,14 +87,17 @@ void led_strip_init(uint8_t clk, uint8_t data)
         //	   printf("Clock pin gesetzt\n");
         pinData = data;
         //	   printf("Daten pin gesetzt\n");
-        pRed =0;
-        pGreen = 0;
-        pBlue = 0;
+        /*        pRed =0;
+                  pGreen = 0;
+                  pBlue = 0;*/
         delay(1);
-        controll_led_strip();
+        controll_led_strip(0,0,0);
     }
 }
-
+/*
+ * Driver area
+ * Begin
+ */
 void led_strip_begin()
 {
     led_strip_32_zero();
@@ -156,43 +159,65 @@ void led_send_data(uint32_t ledStatus)
     }
 }
 /*
+ * End Driver Area
+ */
+
+/*
  *
  */
-void controll_led_strip(void)
+//void controll_led_strip(void)
+void controll_led_strip(uint8_t tRed, uint8_t tGreen, uint8_t tBlue)
 {
     led_strip_begin();
-    led_strip_set_colour(pRed,pGreen,pBlue);
+    led_strip_set_colour(tRed,tGreen,tBlue);
     led_strip_end();
 }
 /*
  *
  */
-uint32_t colour_generator(uint8_t stepsize)
+uint32_t colour_generator(uint8_t stepsize, uint8_t mode)
 {
-    uint32_t theColour=0;
-    uint16_t tRed=0,tGreen=0, tBlue=0;
+    //  uint32_t theColour=0;
+    uint8_t tRed=0,tGreen=0, tBlue=0;
     uint8_t twait = 5;
-    for(tRed=0;tRed<256;tRed+=stepsize)
-    {
-        pRed=tRed;
-        controll_led_strip();
-        delay(twait);
+    if(stepsize==0){
+        stepsize=1;
     }
-    pRed=0;
-    for(tGreen=0;tGreen<256;tGreen+=stepsize)
-    {
-        pGreen=tGreen;
-        controll_led_strip();
-        delay(twait);
+    if(mode ==1){
+        for(tRed=0;tRed<=255-stepsize;tRed+=stepsize)
+        {
+            controll_led_strip(tRed,tGreen,tBlue);
+            delay(twait);
+        }
+        tRed=0;
+        for(tGreen=0;tGreen<=255-stepsize;tGreen+=stepsize)
+        {
+            controll_led_strip(tRed,tGreen,tBlue);
+            delay(twait);
+        }
+        tGreen=0;
+        for(tBlue=0;tBlue<=255-stepsize;tBlue+=stepsize)
+        {
+            controll_led_strip(tRed,tGreen,tBlue);
+            delay(twait);
+        }
+        tBlue=0;
     }
-    pGreen=0;
-    for(tBlue=0;tBlue<256;tBlue+=stepsize)
-    {
-        pBlue=tBlue;
-        controll_led_strip();
-        delay(twait);
+    else if(mode==2){
+        for(tRed=0;tRed<=255-stepsize;tRed+=stepsize){
+            for(tGreen=0;tGreen<=255-stepsize;tGreen+=stepsize){
+                for(tBlue=0;tBlue<=255-stepsize;tBlue+=stepsize){
+                    controll_led_strip(tRed,tGreen,tBlue);
+                    delay(twait);
+                }
+            }
+        }
+        tRed = 0;
+        tGreen =0;
+        tBlue =0;
     }
-    pBlue=0;
+    controll_led_strip(tRed,tGreen,tBlue);
+
     return 0;
 }
 /* main starts hear */
@@ -205,15 +230,12 @@ int main (int argc, char *argv [])
     //	m_red =255;
     /*~~~~ */
     int opt;
+    uint8_t gDebug=0;
     /*~~~~ */
 
     led_strip_init(5,4);
     /* no arguments given */
-    if (argc == 1) {
-        fprintf(stderr, "This program needs arguments....\n\n");
-        print_help(1);
-    }
-    while ((opt = getopt(argc, argv, "c:hv")) != -1) 
+    while ((opt = getopt(argc, argv, "dc:hv")) != -1) 
     {
         switch (opt) 
         {
@@ -224,35 +246,47 @@ int main (int argc, char *argv [])
                 printf("%s %s\n\n", PACKAGE, VERSION);
                 exit(0);
                 break;
-            case 'c':
-                if (strcmp(optarg,"demo")==0)
-                    colour_generator(1);
-                else{
-                }
-            case ':':
-                fprintf(stderr,
-                        "%s: Error - Option `%c' needs a value\n\n",
-                        PACKAGE, optopt);
-                print_help(1);
+            case 'd':
+                // debug switch
+                gDebug=1;
                 break;
-            case '?':
-                if (optopt =='c')
+            case 'c':
+                if(gDebug)
                 {
-                    fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+                    printf("Debug:opt: %c; arg: %s\n",optbind,optarg );
                 }
-                else if (isprint(optopt))
-                    fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-                else
-                    fprintf (stderr,
-                            "Unknown option character `\\x%x'.\n",
-                            optopt);
-               // return 1;
+
+                if (strcmp(optarg,"demo")==0)
+                {
+                    colour_generator(1,1);
+                }
+                else if (strcmp(optarg,"off")==0)
+                {
+                    controll_led_strip(0,0,0);
+                }
+                else if(strcmp(optarg,"fade")==0)
+                {
+                    colour_generator(1,2);
+                }
+                break;
+            case ':':// missing Argument
+                fprintf(stderr,
+                        "%s: Error - Option `%c' needs an Argument \n",
+                        PACKAGE, optopt);
+                // print_help(1);
+                // own help
+                break;
+
+            case '?': /* unknown parameter */
+                fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+                // return 1;
+                break;
             default:
-                abort ();
                 fprintf(stderr,
                         "%s: Error - No such option: `%c'\n\n",
                         PACKAGE, optopt);
                 print_help(1);
+                break;
         }
     }
 
@@ -263,37 +297,9 @@ int main (int argc, char *argv [])
         printf("USAGE:\n");
         print_help(1);
     }
-
-    if (argc ==1)
-    {
-        delay(500);
-        pRed=255;	
-        controll_led_strip();
-        delay(1000);
-        pRed=0;
-        pBlue=255;
-        controll_led_strip();
-        delay(1000);
-        pBlue=0;
-        pGreen=255;
-        controll_led_strip();
-        delay(1000);
-        pGreen=0;
-        controll_led_strip();
-        return 0;
-    }
-    if(strcmp(argv[1],"demo")==0)
-    {
-        colour_generator(1);
-        return 0;
-    }
-
-    if (strcmp( argv[1],"off")==0)
-    {
-        return 0;
-    }
-
+    return (0);
 }
+
 /*
  *
  */
