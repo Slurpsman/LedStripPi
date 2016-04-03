@@ -203,14 +203,21 @@ uint32_t colour_generator(uint8_t stepsize, uint8_t mode)
         }
         tBlue=0;
     }
-    else if(mode==2){
-        for(tRed=0;tRed<=255-stepsize;tRed+=stepsize){
-            for(tGreen=0;tGreen<=255-stepsize;tGreen+=stepsize){
-                for(tBlue=0;tBlue<=255-stepsize;tBlue+=stepsize){
+    else if(mode==2)
+    {
+        for(tRed=0;tRed<255-stepsize;tRed+=stepsize)
+        {            
+            for(tGreen=0;tGreen<255-stepsize;tGreen+=stepsize)
+            {
+                for(tBlue=0;tBlue<255-stepsize;tBlue+=stepsize)
+                {
                     controll_led_strip(tRed,tGreen,tBlue);
-                    delay(twait);
+                    delay(twait*5);
+                    printf("%i,",tBlue);
                 }
+                printf("G:%i, ",tGreen);
             }
+            printf("Red %i\n",tRed);
         }
         tRed = 0;
         tGreen =0;
@@ -235,7 +242,7 @@ int main (int argc, char *argv [])
 
     led_strip_init(5,4);
     /* no arguments given */
-    while ((opt = getopt(argc, argv, "dc:hv")) != -1) 
+    while ((opt = getopt(argc, argv, "dc:hvs:")) != -1) 
     {
         switch (opt) 
         {
@@ -253,7 +260,7 @@ int main (int argc, char *argv [])
             case 'c':
                 if(gDebug)
                 {
-                    printf("Debug:opt: %c; arg: %s\n",optbind,optarg );
+                    printf("Debug:opt: %c; arg: %s\n",optind,optarg );
                 }
 
                 if (strcmp(optarg,"demo")==0)
@@ -266,8 +273,17 @@ int main (int argc, char *argv [])
                 }
                 else if(strcmp(optarg,"fade")==0)
                 {
-                    colour_generator(1,2);
+                    colour_generator(10,2);
                 }
+                break;
+            case 's': // set Colour
+                if(strcmp(optarg,"tv")==0)
+                {
+                    controll_led_strip(255,165,0);
+                    
+                }
+                // get 3 Byte HEX Value
+
                 break;
             case ':':// missing Argument
                 fprintf(stderr,
